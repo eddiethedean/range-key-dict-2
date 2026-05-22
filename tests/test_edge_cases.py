@@ -37,14 +37,22 @@ def test_single_range_boundaries():
     assert 20.001 not in rkd
 
 
-def test_zero_length_range():
-    """Test range with same start and end."""
-    # This should be valid but contain no numbers
-    rkd = RangeKeyDict({(10, 10): "empty"})
+def test_point_range():
+    """Test range with same start and end (single precise value)."""
+    rkd = RangeKeyDict({(10, 10): "ten"})
 
     assert 9 not in rkd
-    assert 10 not in rkd  # Range is [10, 10) so 10 is not included
+    assert rkd[10] == "ten"
     assert 11 not in rkd
+
+
+def test_point_range_issue_1():
+    """Regression for precise-value keys (GitHub issue #1)."""
+    rng = RangeKeyDict()
+    rng[(1, 1)] = "one"
+    assert rng[1] == "one"
+    assert 0 not in rng
+    assert 2 not in rng
 
 
 def test_very_small_range():
