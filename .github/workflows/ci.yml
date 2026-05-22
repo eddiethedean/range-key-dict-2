@@ -76,15 +76,18 @@ jobs:
         print(f"Coverage badge: {pct}% ({color})")
         PY
 
+    # Optional: requires repo on codecov.io and CODECOV_TOKEN secret (see README).
     - name: Upload coverage to Codecov
+      if: secrets.CODECOV_TOKEN != ''
+      continue-on-error: true
       uses: codecov/codecov-action@v4
       with:
         files: coverage.xml
         slug: eddiethedean/range-key-dict-2
         flags: unittests
-        fail_ci_if_error: true
+        fail_ci_if_error: false
         verbose: true
-        use_oidc: true
+        use_oidc: false
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Commit coverage badge

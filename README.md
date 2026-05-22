@@ -329,7 +329,7 @@ pre-commit run --all-files
 
 ### Codecov (optional)
 
-CI uploads coverage to [Codecov](https://codecov.io/gh/eddiethedean/range-key-dict-2) via OIDC on public repos. For protected branches or private forks, add a repository secret `CODECOV_TOKEN` from your Codecov project settings. The README coverage badge is updated automatically from `coverage.xml` on each push to `main`.
+CI uploads coverage to [Codecov](https://codecov.io/gh/eddiethedean/range-key-dict-2) only when the repository is linked on Codecov and a `CODECOV_TOKEN` secret is configured; upload failures do not fail CI. The README coverage badge is updated automatically from `coverage.xml` on each push to `main`.
 
 ## 📋 Requirements
 
