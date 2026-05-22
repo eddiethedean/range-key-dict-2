@@ -3,7 +3,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/range-key-dict-2.svg)](https://pypi.org/project/range-key-dict-2/)
 [![Python versions](https://img.shields.io/pypi/pyversions/range-key-dict-2.svg)](https://pypi.org/project/range-key-dict-2/)
 [![CI Status](https://github.com/eddiethedean/range-key-dict-2/actions/workflows/ci.yml/badge.svg)](https://github.com/eddiethedean/range-key-dict-2/actions)
-[![codecov](https://codecov.io/gh/eddiethedean/range-key-dict-2/branch/main/graph/badge.svg)](https://codecov.io/gh/eddiethedean/range-key-dict-2)
+[![coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/eddiethedean/range-key-dict-2/refs/heads/main/gh-badges/coverage.json)](https://codecov.io/gh/eddiethedean/range-key-dict-2)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A modern, feature-rich Python dictionary that uses numeric ranges as keys. Perfect for mapping continuous ranges of numbers to values, with O(log M + K) lookup performance and full dict-like interface.
@@ -320,6 +320,10 @@ pytest --cov=range_key_dict --cov-report=term-missing
 # Run all pre-commit hooks (black, isort, ruff, mypy)
 pre-commit run --all-files
 ```
+
+### Codecov (optional)
+
+CI uploads coverage to [Codecov](https://codecov.io/gh/eddiethedean/range-key-dict-2) via OIDC on public repos. For protected branches or private forks, add a repository secret `CODECOV_TOKEN` from your Codecov project settings. The README coverage badge is updated automatically from `coverage.xml` on each push to `main`.
 
 ## 📋 Requirements
 
