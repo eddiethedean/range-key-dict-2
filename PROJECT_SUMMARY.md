@@ -31,7 +31,7 @@ Modernized and enhanced fork of [range-key-dict](https://github.com/albertmenglo
 | `test_pep561.py` | `py.typed` marker |
 | `test_robustness.py` | Validation, brute-force parity, regressions |
 
-**Metrics (current):** 214 tests, **98%** coverage on `range_key_dict`
+**Metrics (current):** 215 tests, **98%** coverage on `range_key_dict`
 
 ## Tooling
 
@@ -58,7 +58,7 @@ range-key-dict-2/
 │   ├── __init__.py          # exports, __version__
 │   ├── range_key_dict.py    # RangeKeyDict, RangeEntry
 │   └── py.typed
-├── tests/                   # 9 test modules (200 tests)
+├── tests/                   # 9 test modules (215 tests)
 ├── examples/                # Jupyter notebooks
 ├── examples_code/           # Runnable .py scripts + run_all.sh
 ├── CHANGELOG.md
@@ -73,7 +73,7 @@ range-key-dict-2/
 
 - Bisect-accelerated lookup; accurate O(log M + K) documentation
 - Fixes: `__eq__` value comparison, `overlap_strategy` validation, bound/lookup validation
-- Expanded tests (`test_robustness.py`, bisect parity, 200 tests total)
+- Expanded tests (`test_robustness.py`, bisect parity, 215 tests total)
 
 ### 2.0.1
 

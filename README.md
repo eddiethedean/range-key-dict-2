@@ -18,7 +18,7 @@ This project is directly inspired by and builds upon the excellent work of **Alb
 - Open-ended ranges (infinite bounds)
 - O(log M + K) lookups via binary search on sorted range starts
 - Point ranges `(n, n)` for single-value keys
-- 214 tests with 98% code coverage
+- 215 tests with 98% code coverage
 - Modern tooling (ruff, mypy, ty) and CI/CD on Python 3.8–3.13
 
 ## ✨ Features
@@ -292,7 +292,7 @@ pytest --cov=range_key_dict --cov-report=html
 pytest tests/test_backwards_compatibility.py
 ```
 
-The suite currently has **214 tests** and **98%** coverage on `range_key_dict`. Test modules include backwards compatibility, dict interface, edge cases, open-ended ranges, overlapping strategies, point ranges, performance/bisect correctness, PEP 561, and robustness/regression tests.
+The suite currently has **215 tests** and **98%** coverage on `range_key_dict`. Test modules include backwards compatibility, dict interface, edge cases, open-ended ranges, overlapping strategies, point ranges, performance/bisect correctness, PEP 561, and robustness/regression tests.
 
 ## 🛠️ Development
 

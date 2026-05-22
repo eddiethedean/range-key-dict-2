@@ -10,14 +10,14 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "Matthew Odos", email = "odosmatthews@example.com"},
+    {name = "Matthew Odos", email = "odosmatthews@gmail.com"},
 ]
 maintainers = [
-    {name = "Matthew Odos", email = "odosmatthews@example.com"},
+    {name = "Matthew Odos", email = "odosmatthews@gmail.com"},
 ]
 keywords = ["range", "dict", "interval", "mapping", "data-structure"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -50,7 +50,7 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["range_key_dict*"]
+include = ["range_key_dict"]
 exclude = ["tests*"]
 
 [tool.setuptools.package-data]

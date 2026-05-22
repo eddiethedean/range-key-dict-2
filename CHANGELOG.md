@@ -24,7 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Performance and API documentation now describe O(log M + K) lookup cost accurately
-- Test suite expanded to 214 tests (~98% coverage), including `test_robustness.py`
+- Test suite expanded to 215 tests (~98% coverage), including `test_robustness.py`
+- CI: matrix tests without duplicate coverage runs; Codecov upload is optional and non-blocking
+- PyPI metadata: production/stable classifier, maintainer email corrected
 
 ## [2.0.1] - 2026-05-22
 
