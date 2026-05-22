@@ -31,13 +31,13 @@ Modernized and enhanced fork of [range-key-dict](https://github.com/albertmenglo
 | `test_pep561.py` | `py.typed` marker |
 | `test_robustness.py` | Validation, brute-force parity, regressions |
 
-**Metrics (current):** 200 tests, **98%** coverage on `range_key_dict`
+**Metrics (current):** 214 tests, **98%** coverage on `range_key_dict`
 
 ## Tooling
 
 - **Packaging:** `pyproject.toml` (setuptools)
 - **CI:** GitHub Actions — pytest + coverage on 3.8–3.13; ruff, black, isort, mypy on 3.12
-- **Local checks:** `ruff format`, `ruff check`, `mypy`, `ty check`, `pytest`
+- **Local checks:** `ruff format`, `ruff check`, `mypy`, `pytest`
 - **Pre-commit:** black, isort, ruff, mypy
 
 ## Documentation

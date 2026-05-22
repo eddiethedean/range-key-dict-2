@@ -18,7 +18,7 @@ This project is directly inspired by and builds upon the excellent work of **Alb
 - Open-ended ranges (infinite bounds)
 - O(log M + K) lookups via binary search on sorted range starts
 - Point ranges `(n, n)` for single-value keys
-- 200 tests with 98% code coverage
+- 214 tests with 98% code coverage
 - Modern tooling (ruff, mypy, ty) and CI/CD on Python 3.8–3.13
 
 ## ✨ Features
@@ -38,11 +38,11 @@ This project is directly inspired by and builds upon the excellent work of **Alb
   - `'error'`: Raise exception (default, backwards compatible)
   - `'first'`: Return first matching range (by insertion order)
   - `'last'`: Return last matching range (by insertion order)
-  - `'shortest'`: Return shortest matching range
-  - `'longest'`: Return longest matching range
+  - `'shortest'`: Return shortest matching range (ties: earliest insertion)
+  - `'longest'`: Return longest matching range (ties: latest insertion)
 - **Point Ranges**: Use `(n, n)` when a key should match exactly one number (not a half-open interval)
 - **Flexible Types**: Works with integers, floats, and mixed types (bounds must be `int`, `float`, or `None`; `bool` is rejected)
-- **Input Validation**: Invalid `overlap_strategy`, non-numeric bounds, and non-finite floats raise clear errors at construction
+- **Input Validation**: Invalid `overlap_strategy`, non-numeric bounds, and non-finite floats raise clear errors at construction and lookup
 - **PEP 561**: Ships `py.typed` for type checker discovery
 - **Backwards Compatible**: 100% compatible with original `range-key-dict` v1 API
 
@@ -51,6 +51,13 @@ This project is directly inspired by and builds upon the excellent work of **Alb
 - **Half-open intervals** (default): `[start, end)` — includes `start`, excludes `end`. Adjacent ranges such as `(0, 10)` and `(10, 20)` meet at `10` without overlapping.
 - **Point ranges**: When `start == end`, only that exact value matches (e.g. `(42, 42)` matches `42` only).
 - **Open-ended**: `None` as a bound means negative or positive infinity.
+- **Insertion order**: `first`/`last` use monotonic insertion order; deleting and re-adding a range assigns a new order.
+
+### Limitations
+
+- Lookup keys must be finite `int` or `float` (`nan` and `inf` are rejected, consistent with range bounds).
+- Integer lookups preserve exact precision (including values above 2^53); mixed int/float comparisons use float semantics when needed.
+- `get()` cannot distinguish a missing key from a stored `None` without a sentinel default.
 
 ## 📦 Installation
 
@@ -285,7 +292,7 @@ pytest --cov=range_key_dict --cov-report=html
 pytest tests/test_backwards_compatibility.py
 ```
 
-The suite currently has **200 tests** and **98%** coverage on `range_key_dict`. Test modules include backwards compatibility, dict interface, edge cases, open-ended ranges, overlapping strategies, point ranges, performance/bisect correctness, PEP 561, and robustness/regression tests.
+The suite currently has **214 tests** and **98%** coverage on `range_key_dict`. Test modules include backwards compatibility, dict interface, edge cases, open-ended ranges, overlapping strategies, point ranges, performance/bisect correctness, PEP 561, and robustness/regression tests.
 
 ## 🛠️ Development
 
@@ -312,7 +319,6 @@ ruff check range_key_dict tests
 
 # Type check
 mypy range_key_dict
-ty check
 
 # Run tests with coverage
 pytest --cov=range_key_dict --cov-report=term-missing

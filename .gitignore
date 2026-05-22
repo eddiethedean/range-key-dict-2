@@ -132,3 +132,12 @@ dmypy.json
 
 # Pre-commit
 .pre-commit-config.yaml.backup
+
+# Ruff
+.ruff_cache/
+
+# Extracted sdist trees (e.g. range_key_dict_2-2.0.1/)
+range_key_dict_*-*/
+
+# Pytest cache helper dirs
+pytest-cache-files-*/

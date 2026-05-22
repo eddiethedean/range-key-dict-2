@@ -136,6 +136,7 @@ ignore = [
     "UP035",  # preserve typing.* imports for Python 3.8
     "UP045",  # use Optional[X] (not X | None) for Python 3.8
     "UP037",  # allow quoted forward references where needed
+    "UP007",  # use Union[X, Y] (not X | Y) for Python 3.8
 ]
 
 [tool.ruff.lint.per-file-ignores]

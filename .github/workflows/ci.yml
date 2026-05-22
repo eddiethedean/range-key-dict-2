@@ -29,7 +29,7 @@ jobs:
 
     - name: Run tests with pytest
       run: |
-        pytest tests/ --cov=range_key_dict --cov-report=term-missing
+        pytest tests/ -o addopts=--verbose
 
   coverage:
     name: Coverage report and Codecov
@@ -82,7 +82,7 @@ jobs:
         files: coverage.xml
         slug: eddiethedean/range-key-dict-2
         flags: unittests
-        fail_ci_if_error: false
+        fail_ci_if_error: true
         verbose: true
         use_oidc: true
         token: ${{ secrets.CODECOV_TOKEN }}

@@ -27,9 +27,9 @@ def _brute_force_value(
     if overlap_strategy == "last":
         return max(matches, key=lambda e: e.insertion_order).value
     if overlap_strategy == "shortest":
-        return min(matches, key=lambda e: e.length()).value
+        return min(matches, key=lambda e: (e.length(), e.insertion_order)).value
     if overlap_strategy == "longest":
-        return max(matches, key=lambda e: e.length()).value
+        return max(matches, key=lambda e: (e.length(), e.insertion_order)).value
     raise ValueError(f"unexpected strategy {overlap_strategy!r}")
 
 
@@ -105,6 +105,29 @@ class TestBoundAndKeyValidation:
 
 class TestLookupValidation:
     """Lookup keys must be int or float, not bool or other types."""
+
+    @pytest.mark.parametrize(
+        "bad_query",
+        [float("nan"), float("inf"), float("-inf")],
+    )
+    def test_non_finite_lookup_rejected(self, bad_query: float) -> None:
+        rkd = RangeKeyDict({(0, 100): "x"})
+        with pytest.raises(ValueError, match="finite"):
+            _ = rkd[bad_query]
+
+    @pytest.mark.parametrize(
+        "bad_query",
+        [float("nan"), float("inf"), float("-inf")],
+    )
+    def test_non_finite_lookup_rejected_for_contains(self, bad_query: float) -> None:
+        rkd = RangeKeyDict({(0, 100): "x"})
+        with pytest.raises(ValueError, match="finite"):
+            _ = bad_query in rkd
+
+    def test_non_finite_lookup_rejected_for_get(self) -> None:
+        rkd = RangeKeyDict({(0, 100): "x"})
+        with pytest.raises(ValueError, match="finite"):
+            rkd.get(float("nan"))
 
     @pytest.mark.parametrize(
         "bad_query",
@@ -249,6 +272,75 @@ class TestBisectLookupExhaustive:
         entries = list(rkd._entries)  # noqa: SLF001
         for query in [0, 25, 50, 75, 100, 150, 199]:
             assert rkd[query] == _brute_force_value(entries, query, strategy)
+
+
+class TestLargeIntegerLookups:
+    """Integer lookups above 2**53 must not lose precision."""
+
+    def test_point_range_above_float53_exact_match(self) -> None:
+        n = 9007199254740993  # 2**53 + 1
+        rkd = RangeKeyDict({(n, n): "hit"})
+        assert rkd[n] == "hit"
+        assert n in rkd
+
+    def test_adjacent_ranges_above_float53(self) -> None:
+        a = 9007199254740992  # 2**53
+        b = 9007199254740993  # 2**53 + 1
+        rkd = RangeKeyDict({(a, a + 1): "first", (b, b + 1): "second"})
+        assert rkd[a] == "first"
+        assert rkd[b] == "second"
+
+
+class TestOverlapTieBreaking:
+    """Equal-length overlaps resolve by insertion_order for shortest/longest."""
+
+    def test_shortest_tie_uses_earlier_insertion(self) -> None:
+        rkd = RangeKeyDict(
+            {
+                (0, 100): "wide",
+                (25, 75): "narrow_a",
+                (30, 80): "narrow_b",
+            },
+            overlap_strategy="shortest",
+        )
+        assert rkd[50] == "narrow_a"
+
+    def test_longest_tie_uses_later_insertion(self) -> None:
+        rkd = RangeKeyDict(
+            {
+                (0, 100): "wide",
+                (25, 75): "narrow_a",
+                (30, 80): "narrow_b",
+            },
+            overlap_strategy="longest",
+        )
+        assert rkd[50] == "wide"
+
+    def test_equal_width_pair_shortest_prefers_first_inserted(self) -> None:
+        rkd = RangeKeyDict(overlap_strategy="shortest")
+        rkd[(0, 50)] = "first"
+        rkd[(10, 60)] = "second"
+        assert rkd[25] == "first"
+
+    def test_equal_width_pair_longest_prefers_last_inserted(self) -> None:
+        rkd = RangeKeyDict(overlap_strategy="longest")
+        rkd[(0, 50)] = "first"
+        rkd[(10, 60)] = "second"
+        assert rkd[25] == "second"
+
+
+class TestFirstLastAfterDeleteReadd:
+    """Deleting and re-adding a range assigns a new insertion_order."""
+
+    def test_last_strategy_changes_after_del_and_readd(self) -> None:
+        rkd = RangeKeyDict({(0, 100): "outer"}, overlap_strategy="last")
+        rkd[(40, 60)] = "inner"
+        assert rkd[50] == "inner"
+        del rkd[(40, 60)]
+        rkd[(40, 60)] = "inner_again"
+        assert rkd[50] == "inner_again"
+        rkd[(45, 55)] = "newest"
+        assert rkd[50] == "newest"
 
 
 class TestOverlapStrategyMatrix:

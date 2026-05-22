@@ -17,11 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`overlap_strategy`**: Invalid strategies raise `ValueError` at construction instead of silently using undefined behavior
 - **Range bounds**: Non-numeric and non-finite bounds raise clear errors at construction; bool bounds rejected
 - **Lookup keys**: `bool` is not accepted as a lookup key (avoids `True` matching integer `1`)
+- **Lookup validation**: Non-finite lookup values (`nan`, `inf`) raise `ValueError`, consistent with range bounds
+- **Large integers**: Integer lookups are no longer widened to `float`, preserving exact matches above 2^53
+- **`shortest`/`longest` ties**: Equal-length matches resolve by insertion order (earliest / latest)
 
 ### Changed
 
 - Performance and API documentation now describe O(log M + K) lookup cost accurately
-- Test suite expanded to 200 tests (~98% coverage), including `test_robustness.py`
+- Test suite expanded to 214 tests (~98% coverage), including `test_robustness.py`
 
 ## [2.0.1] - 2026-05-22
 
@@ -34,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Typing**: Annotations use Python 3.8–compatible `typing` forms (`Union`, `Optional`, `Dict`, `List`); exported `RangeBound` alias
 
 ## [2.0.0] - 2025-10-21
+
+> **Note:** Metrics in this section (93 tests, O(M) lookup, flake8, Python 3.8–3.12) describe the initial 2.0.0 release. See [2.1.0](#210---2026-05-22) for current behavior.
 
 ### 🎉 Initial Release
 

@@ -18,6 +18,7 @@ from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, Union, c
 RangeBound = Union[int, float]
 RangeKey = Tuple[Optional[RangeBound], Optional[RangeBound]]
 OverlapStrategy = Literal["error", "first", "last", "shortest", "longest"]
+LookupNumber = Union[int, float]
 
 _VALID_OVERLAP_STRATEGIES: Tuple[str, ...] = (
     "error",
@@ -51,14 +52,34 @@ def _validate_bound(bound: object, name: str) -> Optional[RangeBound]:
     raise TypeError(f"Range {name} must be int, float, or None, got {type(bound).__name__}")
 
 
-def _validate_lookup_number(number: object) -> float:
+def _validate_lookup_number(number: object) -> LookupNumber:
     if isinstance(number, bool):
         raise TypeError("Lookup key must be int or float, not bool")
     if isinstance(number, int):
-        return float(number)
+        return number
     if isinstance(number, float):
+        if not math.isfinite(number):
+            raise ValueError(f"Lookup key must be finite, got {number!r}")
         return number
     raise TypeError(f"Lookup key must be int or float, got {type(number).__name__}")
+
+
+def _numeric_le(a: Union[int, float], b: Union[int, float]) -> bool:
+    if isinstance(a, int) and isinstance(b, int):
+        return a <= b
+    return float(a) <= float(b)
+
+
+def _numeric_lt(a: Union[int, float], b: Union[int, float]) -> bool:
+    if isinstance(a, int) and isinstance(b, int):
+        return a < b
+    return float(a) < float(b)
+
+
+def _numeric_eq(a: Union[int, float], b: Union[int, float]) -> bool:
+    if isinstance(a, int) and isinstance(b, int):
+        return a == b
+    return float(a) == float(b)
 
 
 def _parse_range_key(key: object) -> Tuple[Optional[RangeBound], Optional[RangeBound]]:
@@ -70,6 +91,24 @@ def _parse_range_key(key: object) -> Tuple[Optional[RangeBound], Optional[RangeB
     if start is not None and end is not None and start > end:
         raise ValueError(f"Range start ({start}) must be <= end ({end})")
     return start, end
+
+
+def _sort_key(entry: RangeEntry) -> Tuple[Union[float, int], Union[float, int]]:
+    start = float("-inf") if entry.start is None else entry.start
+    end = float("inf") if entry.end is None else entry.end
+    return (start, end)
+
+
+def _start_le_query(entry: RangeEntry, query: LookupNumber) -> bool:
+    if entry.start is None:
+        return True
+    return _numeric_le(entry.start, query)
+
+
+def _start_gt_query(entry: RangeEntry, query: LookupNumber) -> bool:
+    if entry.start is None:
+        return False
+    return _numeric_lt(query, entry.start)
 
 
 @dataclass(frozen=True)
@@ -85,21 +124,24 @@ class RangeEntry:
         """True when start and end are equal (a single precise value)."""
         return self.start is not None and self.end is not None and self.start == self.end
 
-    def contains(self, number: float) -> bool:
+    def contains(self, number: LookupNumber) -> bool:
         """Check if this range contains the given number."""
         if self.is_point():
-            return number == self.start
-        start_ok = self.start is None or self.start <= number
-        end_ok = self.end is None or number < self.end
+            assert self.start is not None
+            return _numeric_eq(number, self.start)
+        start_ok = self.start is None or _numeric_le(self.start, number)
+        end_ok = self.end is None or _numeric_lt(number, self.end)
         return start_ok and end_ok
 
     def overlaps(self, other: "RangeEntry") -> bool:
         """Check if this range overlaps with another range."""
         if self.is_point():
-            assert self.start is not None
+            if self.start is None:
+                return False
             return other.contains(self.start)
         if other.is_point():
-            assert other.start is not None
+            if other.start is None:
+                return False
             return self.contains(other.start)
 
         # Handle None bounds (infinity)
@@ -115,17 +157,12 @@ class RangeEntry:
         """Calculate the length of the range. Returns inf for unbounded ranges."""
         if self.start is None or self.end is None:
             return float("inf")
-        return self.end - self.start
+        return float(self.end) - float(self.start)
 
     @property
     def key(self) -> RangeKey:
         """Return the range as a tuple (start, end)."""
         return (self.start, self.end)
-
-
-def _effective_start(entry: RangeEntry) -> float:
-    """Sort/lookup key for range start (-inf when open-ended)."""
-    return float("-inf") if entry.start is None else float(entry.start)
 
 
 class RangeKeyDict:
@@ -142,10 +179,10 @@ class RangeKeyDict:
         initial_dict: Optional dictionary with (start, end) tuples as keys
         overlap_strategy: How to handle overlapping ranges:
             - 'error': Raise ValueError on overlaps (default for backwards compatibility)
-            - 'first': Return the first matching range
-            - 'last': Return the last matching range
-            - 'shortest': Return the shortest matching range
-            - 'longest': Return the longest matching range
+            - 'first': Return the first matching range (by insertion order)
+            - 'last': Return the last matching range (by insertion order)
+            - 'shortest': Return the shortest matching range; ties use earliest insertion
+            - 'longest': Return the longest matching range; ties use latest insertion
 
     Examples:
         >>> rkd = RangeKeyDict({(0, 100): 'A', (100, 200): 'B'})
@@ -174,7 +211,7 @@ class RangeKeyDict:
         self._overlap_strategy: OverlapStrategy = _validate_overlap_strategy(overlap_strategy)
         self._next_insertion_order = 0
 
-        if initial_dict:
+        if initial_dict is not None:
             for key, value in initial_dict.items():
                 start, end = _parse_range_key(key)
 
@@ -182,13 +219,11 @@ class RangeKeyDict:
                 self._next_insertion_order += 1
                 self._add_entry(entry)
 
-            # Sort entries by start (None/-inf first), then by end
-            self._entries.sort(
-                key=lambda e: (
-                    float("-inf") if e.start is None else e.start,
-                    float("inf") if e.end is None else e.end,
-                )
-            )
+            self._sort_entries()
+
+    def _sort_entries(self) -> None:
+        """Sort entries by start (None/-inf first), then by end."""
+        self._entries.sort(key=_sort_key)
 
     def _add_entry(self, entry: RangeEntry) -> None:
         """Add an entry, checking for overlaps based on strategy."""
@@ -213,7 +248,7 @@ class RangeKeyDict:
         hi = len(self._entries)
         while lo < hi:
             mid = (lo + hi) // 2
-            if _effective_start(self._entries[mid]) <= query:
+            if _start_le_query(self._entries[mid], query):
                 lo = mid + 1
             else:
                 hi = mid
@@ -223,7 +258,7 @@ class RangeKeyDict:
         i = idx - 1
         while i >= 0:
             entry = self._entries[i]
-            if _effective_start(entry) > query:
+            if _start_gt_query(entry, query):
                 break
             if entry.contains(query):
                 matches.append(entry)
@@ -233,28 +268,23 @@ class RangeKeyDict:
 
     def _select_entry(self, matches: List[RangeEntry]) -> RangeEntry:
         """Select the appropriate entry based on overlap strategy."""
-        if not matches:
-            raise KeyError("No matching range found")
-
         if len(matches) == 1:
             return matches[0]
 
         # Multiple matches - apply overlap strategy
         if self._overlap_strategy == "first":
-            # Return the first inserted range
             return min(matches, key=lambda e: e.insertion_order)
-        elif self._overlap_strategy == "last":
-            # Return the last inserted range
+        if self._overlap_strategy == "last":
             return max(matches, key=lambda e: e.insertion_order)
-        elif self._overlap_strategy == "shortest":
-            return min(matches, key=lambda e: e.length())
-        elif self._overlap_strategy == "longest":
-            return max(matches, key=lambda e: e.length())
+        if self._overlap_strategy == "shortest":
+            return min(matches, key=lambda e: (e.length(), e.insertion_order))
+        if self._overlap_strategy == "longest":
+            return max(matches, key=lambda e: (e.length(), e.insertion_order))
         raise ValueError(
             f"Multiple ranges match but overlap_strategy is {self._overlap_strategy!r}"
         )
 
-    def __getitem__(self, number: float) -> Any:
+    def __getitem__(self, number: LookupNumber) -> Any:
         """
         Look up which range contains the number and return its value.
 
@@ -272,7 +302,7 @@ class RangeKeyDict:
             raise KeyError(number)
         return self._select_entry(matches).value
 
-    def get(self, number: float, default: Any = None) -> Any:
+    def get(self, number: LookupNumber, default: Any = None) -> Any:
         """
         Get the value for a number, returning default if not found.
 
@@ -288,7 +318,7 @@ class RangeKeyDict:
         except KeyError:
             return default
 
-    def __contains__(self, number: float) -> bool:
+    def __contains__(self, number: LookupNumber) -> bool:
         """Check if the number falls within any range."""
         return len(self._find_matching_entries(number)) > 0
 
@@ -335,13 +365,7 @@ class RangeKeyDict:
         self._next_insertion_order += 1
         self._add_entry(entry)
 
-        # Re-sort
-        self._entries.sort(
-            key=lambda e: (
-                float("-inf") if e.start is None else e.start,
-                float("inf") if e.end is None else e.end,
-            )
-        )
+        self._sort_entries()
 
     def __delitem__(self, key: RangeKey) -> None:
         """
@@ -392,51 +416,5 @@ __all__ = [
     "RangeKey",
     "RangeBound",
     "OverlapStrategy",
+    "LookupNumber",
 ]
-
-
-if __name__ == "__main__":
-    # Original test cases from v1 for backwards compatibility
-    range_key_dict = RangeKeyDict(
-        {
-            (0, 100): "A",
-            (100, 200): "B",
-            (200, 300): "C",
-        }
-    )
-
-    # test normal case
-    assert range_key_dict[70] == "A"
-    assert range_key_dict[170] == "B"
-    assert range_key_dict[270] == "C"
-
-    # test case when the number is float
-    assert range_key_dict[70.5] == "A"
-
-    # test case not in the range, with default value
-    assert range_key_dict.get(1000, "D") == "D"
-
-    print("✓ All backwards compatibility tests passed!")
-
-    # New features demo
-    print("\nNew features:")
-
-    # Open-ended ranges
-    rkd2 = RangeKeyDict(
-        {
-            (None, 0): "negative",
-            (0, 100): "small positive",
-            (100, None): "large positive",
-        }
-    )
-    print(f"rkd2[-50] = {rkd2[-50]}")  # negative
-    print(f"rkd2[50] = {rkd2[50]}")  # small positive
-    print(f"rkd2[500] = {rkd2[500]}")  # large positive
-
-    # Dict-like interface
-    print(f"\nlen(range_key_dict) = {len(range_key_dict)}")
-    print(f"150 in range_key_dict = {150 in range_key_dict}")
-    print(f"keys: {range_key_dict.keys()}")
-    print(f"values: {range_key_dict.values()}")
-
-    print("\n✓ All tests passed!")
