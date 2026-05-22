@@ -5,11 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-05-22
+
+### Added
+
+- **Bisect-accelerated lookup**: Find candidate ranges in O(log M + K) via binary search on sorted starts, then backward scan for matches
+
+### Fixed
+
+- **`__eq__`**: Compare stored values with `==` instead of `repr()` (e.g. `1` and `1.0` now compare equal)
+- **`overlap_strategy`**: Invalid strategies raise `ValueError` at construction instead of silently using undefined behavior
+- **Range bounds**: Non-numeric and non-finite bounds raise clear errors at construction; bool bounds rejected
+- **Lookup keys**: `bool` is not accepted as a lookup key (avoids `True` matching integer `1`)
+
+### Changed
+
+- Performance and API documentation now describe O(log M + K) lookup cost accurately
+
 ## [2.0.1] - 2026-05-22
 
 ### Fixed
 
-- **Point ranges**: Keys where `start == end` (e.g. `(1, 1)`) now match that single value on lookup ([#1](https://github.com/eddiethedean/range-key-dict-2/issues/1))
+- **Point ranges**: Keys where `start == end` (e.g. `(1, 1)`) now match that single value on lookup ([#1](https://github.com/odosmatthews/range-key-dict-2/issues/1))
 
 ### Changed
 
@@ -89,6 +106,7 @@ See [original repository](https://github.com/albertmenglongli/range-key-dict) fo
 
 ---
 
+[2.1.0]: https://github.com/odosmatthews/range-key-dict-2/releases/tag/v2.1.0
 [2.0.1]: https://github.com/odosmatthews/range-key-dict-2/releases/tag/v2.0.1
 [2.0.0]: https://github.com/odosmatthews/range-key-dict-2/releases/tag/v2.0.0
 

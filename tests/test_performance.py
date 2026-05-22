@@ -1,17 +1,47 @@
-"""Basic performance and scalability tests.
+"""Basic performance and scalability tests."""
 
-TODO: Current implementation uses O(M) linear search for lookups.
-Future optimization should implement O(log M) binary search using:
-- Sorted list of range starts with binary search (bisect module)
-- Interval tree for more complex overlap scenarios
-- Benchmark suite to measure improvements
-"""
-
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 
 import pytest
 
 from range_key_dict import RangeKey, RangeKeyDict
+
+
+def _lookup_cases() -> List[Tuple[RangeKeyDict, List[Tuple[float, Any]]]]:
+    """Representative dicts and expected (query, value) pairs."""
+    return [
+        (
+            RangeKeyDict({(0, 100): "A", (100, 200): "B", (200, 300): "C"}),
+            [(50, "A"), (150, "B"), (250, "C"), (300, KeyError)],
+        ),
+        (
+            RangeKeyDict({(None, 0): "neg", (0, 100): "mid", (100, None): "pos"}),
+            [(-5, "neg"), (50, "mid"), (200, "pos")],
+        ),
+        (
+            RangeKeyDict({(10, 10): "ten", (0, 20): "wide"}, overlap_strategy="first"),
+            [(10, "ten"), (5, "wide")],
+        ),
+        (
+            RangeKeyDict(
+                {(0, 200): "long", (50, 150): "med", (80, 90): "short"},
+                overlap_strategy="shortest",
+            ),
+            [(85, "short"), (25, "long")],
+        ),
+    ]
+
+
+@pytest.mark.parametrize("rkd,queries", _lookup_cases())
+def test_bisect_lookup_correctness(rkd: RangeKeyDict, queries: List[Tuple[float, Any]]) -> None:
+    """Bisect-backed lookup matches expected values across scenarios."""
+    for query, expected in queries:
+        if expected is KeyError:
+            with pytest.raises(KeyError):
+                _ = rkd[query]
+        else:
+            assert rkd[query] == expected
+            assert query in rkd
 
 
 def test_moderate_number_of_ranges():
@@ -60,6 +90,17 @@ def test_scalability(size):
     assert rkd[5] == "range_0"
     if size >= 10:
         assert rkd[size * 5] == f"range_{size // 2}"
+
+
+def test_large_non_overlapping_boundaries():
+    """Sanity check bisect path on many adjacent ranges."""
+    ranges: Dict[RangeKey, Any] = {(i * 100, (i + 1) * 100): f"range_{i}" for i in range(10_000)}
+    rkd = RangeKeyDict(ranges)
+    assert rkd[0] == "range_0"
+    assert rkd[99] == "range_0"
+    assert rkd[100] == "range_1"
+    assert rkd[999_950] == "range_9999"
+    assert 1_000_000 not in rkd
 
 
 def test_basic_operations_correctness():

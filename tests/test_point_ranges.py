@@ -311,9 +311,9 @@ class TestPointRangeConstruction:
         with pytest.raises(ValueError, match="start.*must be.*end"):
             RangeKeyDict({(10, 5): "invalid"})
 
-    def test_float_special_values_not_points(self):
-        """inf == inf would be a point; ensure lookups behave predictably."""
-        rkd = RangeKeyDict({(math.inf, math.inf): "inf"})
-        assert rkd[math.inf] == "inf"
-        assert math.inf in rkd
-        assert 0 not in rkd
+    def test_non_finite_bounds_rejected(self):
+        """Non-finite float bounds are rejected at construction."""
+        with pytest.raises(ValueError, match="finite"):
+            RangeKeyDict({(math.inf, math.inf): "inf"})
+        with pytest.raises(ValueError, match="finite"):
+            RangeKeyDict({(float("nan"), 10): "n"})

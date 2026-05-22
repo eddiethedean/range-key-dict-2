@@ -1,5 +1,7 @@
 """Test dict-like interface methods."""
 
+from typing import Any, cast
+
 import pytest
 
 from range_key_dict import RangeKeyDict
@@ -174,6 +176,37 @@ def test_eq():
     assert rkd1 != rkd3
     assert rkd1 != "not a dict"
     assert rkd1 != 42
+
+
+def test_eq_numeric_value_equivalence():
+    """Equality uses value ==, not repr (1 and 1.0 are equal)."""
+    assert RangeKeyDict({(0, 100): 1}) == RangeKeyDict({(0, 100): 1.0})
+
+
+def test_eq_unhashable_values():
+    """Equality compares list values by content."""
+    shared = [1, 2]
+    assert RangeKeyDict({(0, 10): shared}) == RangeKeyDict({(0, 10): [1, 2]})
+
+
+def test_eq_none_values():
+    """Equality with None stored as value."""
+    assert RangeKeyDict({(0, 10): None}) == RangeKeyDict({(0, 10): None})
+
+
+def test_invalid_string_bounds_rejected():
+    """Non-numeric bounds fail at construction, not on lookup."""
+    with pytest.raises(TypeError, match="Range start"):
+        RangeKeyDict(cast(Any, {("a", "z"): "x"}))
+
+
+def test_bool_lookup_rejected():
+    """Bool lookups are rejected (bool is not treated as int)."""
+    rkd = RangeKeyDict({(0, 2): "x"})
+    with pytest.raises(TypeError, match="bool"):
+        _ = rkd[True]
+    with pytest.raises(TypeError, match="bool"):
+        assert True in rkd
 
 
 def test_empty_dict_operations(empty_dict):

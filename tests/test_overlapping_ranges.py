@@ -1,5 +1,7 @@
 """Test overlapping range strategies."""
 
+from typing import Any, cast
+
 import pytest
 
 from range_key_dict import RangeKeyDict
@@ -236,14 +238,22 @@ def test_overlap_with_floats():
     assert rkd[12.0] == "B"
 
 
-def test_overlap_strategy_case_insensitive():
-    """Test that overlap strategy is validated."""
-    # Valid strategies should work
+def test_overlap_strategy_valid_values():
+    """Test that valid overlap strategies are accepted."""
     RangeKeyDict({(0, 100): "A"}, overlap_strategy="error")
     RangeKeyDict({(0, 100): "A"}, overlap_strategy="first")
     RangeKeyDict({(0, 100): "A"}, overlap_strategy="last")
     RangeKeyDict({(0, 100): "A"}, overlap_strategy="shortest")
     RangeKeyDict({(0, 100): "A"}, overlap_strategy="longest")
+
+
+def test_overlap_strategy_invalid_rejected():
+    """Test that invalid overlap strategies raise ValueError."""
+    with pytest.raises(ValueError, match="Invalid overlap_strategy"):
+        RangeKeyDict({(0, 100): "A"}, overlap_strategy=cast(Any, "FIRST"))
+
+    with pytest.raises(ValueError, match="Invalid overlap_strategy"):
+        RangeKeyDict(overlap_strategy=cast(Any, "invalid"))
 
 
 def test_setitem_with_overlap_strategies():

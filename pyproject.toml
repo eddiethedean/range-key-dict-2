@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "range-key-dict-2"
-version = "2.0.1"
-description = "A modern dict implementation supporting range-based keys with O(log M) lookups"
+version = "2.1.0"
+description = "A modern dict implementation supporting range-based keys with O(log M + K) lookups"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}

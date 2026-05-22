@@ -2,7 +2,7 @@
 A modern dictionary implementation that uses ranges as keys.
 
 This module provides RangeKeyDict, which allows you to map numeric ranges to values
-and perform efficient O(log M) lookups to find which range contains a given number.
+and perform O(log M + K) lookups (K = ranges with start <= query) to find matches.
 
 Original concept by Albert Li (menglong.li): https://github.com/albertmenglongli/range-key-dict
 Modernized and enhanced for Python 3.8+ with improved performance and additional features.
@@ -10,13 +10,66 @@ Modernized and enhanced for Python 3.8+ with improved performance and additional
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, Union, cast
 
 # Type aliases (int bounds are valid; floats and None for open-ended ranges)
 RangeBound = Union[int, float]
 RangeKey = Tuple[Optional[RangeBound], Optional[RangeBound]]
 OverlapStrategy = Literal["error", "first", "last", "shortest", "longest"]
+
+_VALID_OVERLAP_STRATEGIES: Tuple[str, ...] = (
+    "error",
+    "first",
+    "last",
+    "shortest",
+    "longest",
+)
+
+
+def _validate_overlap_strategy(strategy: str) -> OverlapStrategy:
+    if strategy not in _VALID_OVERLAP_STRATEGIES:
+        raise ValueError(
+            f"Invalid overlap_strategy {strategy!r}; "
+            f"must be one of: {', '.join(_VALID_OVERLAP_STRATEGIES)}"
+        )
+    return cast(OverlapStrategy, strategy)
+
+
+def _validate_bound(bound: object, name: str) -> Optional[RangeBound]:
+    if bound is None:
+        return None
+    if isinstance(bound, bool):
+        raise TypeError(f"Range {name} must be int, float, or None, not bool")
+    if isinstance(bound, int):
+        return bound
+    if isinstance(bound, float):
+        if not math.isfinite(bound):
+            raise ValueError(f"Range {name} must be finite, got {bound!r}")
+        return bound
+    raise TypeError(f"Range {name} must be int, float, or None, got {type(bound).__name__}")
+
+
+def _validate_lookup_number(number: object) -> float:
+    if isinstance(number, bool):
+        raise TypeError("Lookup key must be int or float, not bool")
+    if isinstance(number, int):
+        return float(number)
+    if isinstance(number, float):
+        return number
+    raise TypeError(f"Lookup key must be int or float, got {type(number).__name__}")
+
+
+def _parse_range_key(key: object) -> Tuple[Optional[RangeBound], Optional[RangeBound]]:
+    if not isinstance(key, tuple) or len(key) != 2:
+        raise TypeError(f"Range key must be a 2-tuple, got {type(key)}")
+    start, end = key
+    start = _validate_bound(start, "start")
+    end = _validate_bound(end, "end")
+    if start is not None and end is not None and start > end:
+        raise ValueError(f"Range start ({start}) must be <= end ({end})")
+    return start, end
 
 
 @dataclass(frozen=True)
@@ -70,13 +123,20 @@ class RangeEntry:
         return (self.start, self.end)
 
 
+def _effective_start(entry: RangeEntry) -> float:
+    """Sort/lookup key for range start (-inf when open-ended)."""
+    return float("-inf") if entry.start is None else float(entry.start)
+
+
 class RangeKeyDict:
     """
     A dictionary that uses numeric ranges as keys.
 
     This class allows you to map ranges of numbers to values and efficiently
     look up which range contains a given number. Lookups are performed in
-    O(log M) time where M is the number of ranges.
+    O(log M + K) time where M is the number of ranges and K is how many
+    ranges have a start less than or equal to the query (K is 1 for typical
+    non-overlapping layouts; K can approach M when many ranges overlap).
 
     Args:
         initial_dict: Optional dictionary with (start, end) tuples as keys
@@ -111,20 +171,12 @@ class RangeKeyDict:
     ) -> None:
         """Initialize a RangeKeyDict."""
         self._entries: List[RangeEntry] = []
-        self._overlap_strategy: OverlapStrategy = overlap_strategy
+        self._overlap_strategy: OverlapStrategy = _validate_overlap_strategy(overlap_strategy)
         self._next_insertion_order = 0
 
         if initial_dict:
-            # Validate and convert input
             for key, value in initial_dict.items():
-                if not isinstance(key, tuple) or len(key) != 2:
-                    raise TypeError(f"Range key must be a 2-tuple, got {type(key)}")
-
-                start, end = key
-
-                # Validate bounds
-                if start is not None and end is not None and start > end:
-                    raise ValueError(f"Range start ({start}) must be <= end ({end})")
+                start, end = _parse_range_key(key)
 
                 entry = RangeEntry(start, end, value, self._next_insertion_order)
                 self._next_insertion_order += 1
@@ -150,19 +202,32 @@ class RangeKeyDict:
 
         self._entries.append(entry)
 
-    def _find_matching_entries(self, number: float) -> List[RangeEntry]:
-        """Find all entries that contain the given number.
+    def _find_matching_entries(self, number: object) -> List[RangeEntry]:
+        """Find all entries that contain the given number (O(log M + K))."""
+        query = _validate_lookup_number(number)
+        if not self._entries:
+            return []
 
-        TODO: Optimize this to O(log M) using binary search on sorted starts.
-        Current implementation is O(M) linear scan.
-        """
+        # Binary search for first index with start > query (Python 3.8 compatible).
+        lo = 0
+        hi = len(self._entries)
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if _effective_start(self._entries[mid]) <= query:
+                lo = mid + 1
+            else:
+                hi = mid
+        idx = lo
+
         matches: List[RangeEntry] = []
-
-        # Linear scan - works well for small to moderate number of ranges
-        # For optimization, use bisect to binary search on sorted start values
-        for entry in self._entries:
-            if entry.contains(number):
+        i = idx - 1
+        while i >= 0:
+            entry = self._entries[i]
+            if _effective_start(entry) > query:
+                break
+            if entry.contains(query):
                 matches.append(entry)
+            i -= 1
 
         return matches
 
@@ -185,8 +250,9 @@ class RangeKeyDict:
             return min(matches, key=lambda e: e.length())
         elif self._overlap_strategy == "longest":
             return max(matches, key=lambda e: e.length())
-        else:  # error strategy with multiple matches shouldn't happen
-            return matches[0]
+        raise ValueError(
+            f"Multiple ranges match but overlap_strategy is {self._overlap_strategy!r}"
+        )
 
     def __getitem__(self, number: float) -> Any:
         """
@@ -259,13 +325,7 @@ class RangeKeyDict:
             TypeError: If key is not a 2-tuple
             ValueError: If the range is invalid or overlaps with existing ranges
         """
-        if not isinstance(key, tuple) or len(key) != 2:
-            raise TypeError(f"Range key must be a 2-tuple, got {type(key)}")
-
-        start, end = key
-
-        if start is not None and end is not None and start > end:
-            raise ValueError(f"Range start ({start}) must be <= end ({end})")
+        start, end = _parse_range_key(key)
 
         # Remove existing entry with this exact key if it exists
         self._entries = [e for e in self._entries if e.key != key]
@@ -320,15 +380,19 @@ class RangeKeyDict:
         if self._overlap_strategy != other._overlap_strategy:
             return False
 
-        # Compare entries by their semantic content (key and value), not insertion_order
-        self_items = {(e.key, repr(e.value)) for e in self._entries}
-        other_items = {(e.key, repr(e.value)) for e in other._entries}
-
-        return self_items == other_items
+        self_pairs = sorted((e.key, e.value) for e in self._entries)
+        other_pairs = sorted((e.key, e.value) for e in other._entries)
+        return self_pairs == other_pairs
 
 
 # Backwards compatibility: allow imports from module level
-__all__ = ["RangeKeyDict", "RangeEntry", "RangeKey", "OverlapStrategy"]
+__all__ = [
+    "RangeKeyDict",
+    "RangeEntry",
+    "RangeKey",
+    "RangeBound",
+    "OverlapStrategy",
+]
 
 
 if __name__ == "__main__":

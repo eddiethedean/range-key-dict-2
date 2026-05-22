@@ -6,7 +6,7 @@
 [![codecov](https://codecov.io/gh/odosmatthews/range-key-dict-2/branch/main/graph/badge.svg)](https://codecov.io/gh/odosmatthews/range-key-dict-2)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A modern, feature-rich Python dictionary that uses numeric ranges as keys. Perfect for mapping continuous ranges of numbers to values, with O(M) lookup performance and full dict-like interface.
+A modern, feature-rich Python dictionary that uses numeric ranges as keys. Perfect for mapping continuous ranges of numbers to values, with O(log M + K) lookup performance and full dict-like interface.
 
 ## 🎯 Credit & Inspiration
 
@@ -16,7 +16,7 @@ This project is directly inspired by and builds upon the excellent work of **Alb
 - Full dictionary-like interface
 - Overlapping range strategies
 - Open-ended ranges (infinite bounds)
-- Comprehensive test coverage (93 tests, 98% coverage)
+- Comprehensive test coverage (150+ tests, high coverage)
 - Modern tooling and CI/CD
 
 ## ✨ Features
@@ -255,16 +255,9 @@ Simply change your dependency from `range-key-dict` to `range-key-dict-2` and en
 
 ## ⚡ Performance
 
-Current implementation uses O(M) linear scan for lookups, where M is the number of ranges. Performance is excellent for small to moderate numbers of ranges (< 1000).
+Lookups use binary search on sorted range starts, then scan backward over candidates whose start is at most the query value. Complexity is **O(log M + K)** where M is the number of ranges and K is how many ranges can still contain the query (typically K = 1 for non-overlapping adjacent ranges; K can approach M when many ranges overlap or share open lower bounds).
 
-### Performance Roadmap
-
-Future versions will implement O(log M) binary search optimization using:
-- Sorted list of range starts with `bisect` module
-- Interval trees for complex overlap scenarios
-- See [TODO in source](range_key_dict/range_key_dict.py) for details
-
-For most use cases, current performance is more than sufficient. The linear scan is simple, correct, and fast enough.
+Performance is excellent for typical layouts with hundreds or thousands of ranges. For heavy overlap at a single point, consider fewer overlapping ranges or interval-tree libraries (see Related Projects).
 
 ## 🧪 Testing
 
@@ -281,7 +274,7 @@ pytest --cov=range_key_dict --cov-report=html
 pytest tests/test_backwards_compatibility.py
 ```
 
-Current test coverage: **98%** (93 tests)
+Run `pytest --cov=range_key_dict` for current test count and coverage (150+ tests).
 
 ## 🛠️ Development
 

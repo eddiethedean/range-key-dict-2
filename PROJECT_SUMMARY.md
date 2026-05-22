@@ -177,5 +177,5 @@ range-key-dict-2/
 
 **Status**: ✅ **COMPLETE** - Ready for use and publication
 **Date**: October 21, 2025
-**Version**: 2.0.1
+**Version**: 2.1.0
 
