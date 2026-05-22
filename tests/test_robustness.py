@@ -33,9 +33,7 @@ def _brute_force_value(
     raise ValueError(f"unexpected strategy {overlap_strategy!r}")
 
 
-def _build_non_overlapping_ranges(
-    rng: random.Random, count: int
-) -> Dict[RangeKey, str]:
+def _build_non_overlapping_ranges(rng: random.Random, count: int) -> Dict[RangeKey, str]:
     """Build gap-separated half-open ranges."""
     ranges: Dict[RangeKey, str] = {}
     cursor = 0
@@ -61,7 +59,7 @@ class TestBoundAndKeyValidation:
     )
     def test_bool_bounds_rejected_on_init(self, bad_key: object) -> None:
         with pytest.raises(TypeError, match="bool"):
-            RangeKeyDict({bad_key: "x"})  # type: ignore[dict-item]
+            RangeKeyDict(cast(Any, {bad_key: "x"}))
 
     @pytest.mark.parametrize(
         "bad_key",
@@ -73,7 +71,7 @@ class TestBoundAndKeyValidation:
     def test_bool_bounds_rejected_on_setitem(self, bad_key: object) -> None:
         rkd = RangeKeyDict()
         with pytest.raises(TypeError, match="bool"):
-            rkd[bad_key] = "x"  # type: ignore[index]
+            rkd[cast(Any, bad_key)] = "x"
 
     @pytest.mark.parametrize(
         "bad_end",
@@ -93,16 +91,16 @@ class TestBoundAndKeyValidation:
     )
     def test_non_tuple_keys_rejected(self, invalid_key: object, match: str) -> None:
         with pytest.raises(TypeError, match=match):
-            RangeKeyDict({invalid_key: "x"})  # type: ignore[dict-item]
+            RangeKeyDict(cast(Any, {invalid_key: "x"}))
 
     def test_list_key_rejected_at_construction(self) -> None:
         with pytest.raises(TypeError):
-            RangeKeyDict({[0, 100]: "x"})  # type: ignore[dict-item,misc]
+            RangeKeyDict(cast(Any, {[0, 100]: "x"}))
 
     def test_setitem_rejects_string_end_bound(self) -> None:
         rkd = RangeKeyDict()
         with pytest.raises(TypeError, match="Range end"):
-            rkd[(0, "ten")] = "x"  # type: ignore[index]
+            rkd[cast(Any, (0, "ten"))] = "x"
 
 
 class TestLookupValidation:
@@ -115,7 +113,7 @@ class TestLookupValidation:
     def test_invalid_lookup_type_rejected(self, bad_query: object) -> None:
         rkd = RangeKeyDict({(0, 100): "x"})
         with pytest.raises(TypeError, match="int or float"):
-            _ = rkd[bad_query]  # type: ignore[index]
+            _ = rkd[cast(Any, bad_query)]
 
     @pytest.mark.parametrize(
         "bad_query",
@@ -124,7 +122,7 @@ class TestLookupValidation:
     def test_invalid_lookup_type_rejected_for_contains(self, bad_query: object) -> None:
         rkd = RangeKeyDict({(0, 100): "x"})
         with pytest.raises(TypeError, match="int or float"):
-            _ = bad_query in rkd  # type: ignore[operator]
+            _ = cast(Any, bad_query) in rkd
 
     def test_keyerror_uses_query_value(self) -> None:
         rkd = RangeKeyDict({(0, 10): "x"})
@@ -217,12 +215,8 @@ class TestBisectLookupExhaustive:
             raw = _build_non_overlapping_ranges(rng, rng.randint(1, 40))
             rkd = RangeKeyDict(raw)
             entries = list(rkd._entries)  # noqa: SLF001
-            min_start = min(
-                float("-inf") if e.start is None else e.start for e in entries
-            )
-            max_end = max(
-                float("inf") if e.end is None else e.end for e in entries
-            )
+            min_start = min(float("-inf") if e.start is None else e.start for e in entries)
+            max_end = max(float("inf") if e.end is None else e.end for e in entries)
             for _ in range(30):
                 if rng.random() < 0.15:
                     query = rng.uniform(min_start - 50, max_end + 50)
@@ -231,7 +225,8 @@ class TestBisectLookupExhaustive:
                     lo = float("-inf") if pick.start is None else pick.start
                     hi = float("inf") if pick.end is None else pick.end
                     if pick.is_point():
-                        query = float(pick.start)  # type: ignore[arg-type]
+                        assert pick.start is not None
+                        query = float(pick.start)
                     else:
                         query = rng.uniform(lo, hi - 1e-9 if hi != float("inf") else hi)
 

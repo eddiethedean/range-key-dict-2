@@ -21,12 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Performance and API documentation now describe O(log M + K) lookup cost accurately
+- Test suite expanded to 200 tests (~98% coverage), including `test_robustness.py`
 
 ## [2.0.1] - 2026-05-22
 
 ### Fixed
 
-- **Point ranges**: Keys where `start == end` (e.g. `(1, 1)`) now match that single value on lookup ([#1](https://github.com/odosmatthews/range-key-dict-2/issues/1))
+- **Point ranges**: Keys where `start == end` (e.g. `(1, 1)`) now match that single value on lookup ([#1](https://github.com/eddiethedean/range-key-dict-2/issues/1))
 
 ### Changed
 
@@ -106,7 +107,7 @@ See [original repository](https://github.com/albertmenglongli/range-key-dict) fo
 
 ---
 
-[2.1.0]: https://github.com/odosmatthews/range-key-dict-2/releases/tag/v2.1.0
-[2.0.1]: https://github.com/odosmatthews/range-key-dict-2/releases/tag/v2.0.1
-[2.0.0]: https://github.com/odosmatthews/range-key-dict-2/releases/tag/v2.0.0
+[2.1.0]: https://github.com/eddiethedean/range-key-dict-2/releases/tag/v2.1.0
+[2.0.1]: https://github.com/eddiethedean/range-key-dict-2/releases/tag/v2.0.1
+[2.0.0]: https://github.com/eddiethedean/range-key-dict-2/releases/tag/v2.0.0
 

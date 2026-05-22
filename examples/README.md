@@ -1,6 +1,13 @@
 # range-key-dict-2 Examples
 
-This directory contains **Jupyter notebooks** with comprehensive examples demonstrating all features of `range-key-dict-2`.
+This directory contains **Jupyter notebooks** with comprehensive examples demonstrating all features of `range-key-dict-2` (version **2.1.0**).
+
+## Range semantics (read first)
+
+- **Half-open keys** `(start, end)` match `[start, end)` — `start` is included, `end` is excluded.
+- **Point keys** `(n, n)` match only the single value `n` (useful for exact thresholds).
+- **`None` bounds** mean negative or positive infinity, e.g. `(None, 0)` or `(0, None)`.
+- **Overlapping ranges** require an `overlap_strategy` other than the default `'error'`.
 
 ## 📓 Format Options
 
@@ -20,7 +27,7 @@ Both formats contain identical examples - choose based on your preference!
 Learn the fundamentals:
 - Creating a RangeKeyDict
 - Looking up values
-- Understanding range boundaries `[start, end)`
+- Understanding range boundaries `[start, end)` and point keys `(n, n)`
 - Safe lookups with `get()`
 - Checking membership with `in`
 - Working with floats
@@ -248,6 +255,14 @@ print(pricing[500])  # Output: 15.99 (VIP)
 print(pricing[5000])  # Output: 19.99 (Standard)
 ```
 
+**Point Range (exact value):**
+```python
+flags = RangeKeyDict({(404, 404): "not_found"})
+print(flags[404])  # Output: not_found
+print(404.0 in flags)  # True
+print(403 in flags)  # False
+```
+
 ## 🧪 Testing the Examples
 
 All examples include inline assertions and validations. If an example completes without errors, all tests passed!
@@ -267,7 +282,7 @@ done
 - [Main README](../README.md) - Full package documentation
 - [API Reference](../range_key_dict/range_key_dict.py) - Source code with docstrings
 - [Tests](../tests/) - Comprehensive test suite
-- [GitHub](https://github.com/odosmatthews/range-key-dict-2) - Report issues, contribute
+- [GitHub](https://github.com/eddiethedean/range-key-dict-2) - Report issues, contribute
 
 ## 🤝 Contributing Examples
 
@@ -282,8 +297,8 @@ Have a great use case? We'd love to add it!
 ## 💬 Questions?
 
 - 📖 Read the [main documentation](../README.md)
-- 🐛 [Report issues](https://github.com/odosmatthews/range-key-dict-2/issues)
-- 💡 [Start a discussion](https://github.com/odosmatthews/range-key-dict-2/discussions)
+- 🐛 [Report issues](https://github.com/eddiethedean/range-key-dict-2/issues)
+- 💡 [Start a discussion](https://github.com/eddiethedean/range-key-dict-2/discussions)
 
 ---
 

@@ -2,8 +2,8 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/range-key-dict-2.svg)](https://pypi.org/project/range-key-dict-2/)
 [![Python versions](https://img.shields.io/pypi/pyversions/range-key-dict-2.svg)](https://pypi.org/project/range-key-dict-2/)
-[![CI Status](https://github.com/odosmatthews/range-key-dict-2/workflows/CI/badge.svg)](https://github.com/odosmatthews/range-key-dict-2/actions)
-[![codecov](https://codecov.io/gh/odosmatthews/range-key-dict-2/branch/main/graph/badge.svg)](https://codecov.io/gh/odosmatthews/range-key-dict-2)
+[![CI Status](https://github.com/eddiethedean/range-key-dict-2/actions/workflows/ci.yml/badge.svg)](https://github.com/eddiethedean/range-key-dict-2/actions)
+[![codecov](https://codecov.io/gh/eddiethedean/range-key-dict-2/branch/main/graph/badge.svg)](https://codecov.io/gh/eddiethedean/range-key-dict-2)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A modern, feature-rich Python dictionary that uses numeric ranges as keys. Perfect for mapping continuous ranges of numbers to values, with O(log M + K) lookup performance and full dict-like interface.
@@ -16,8 +16,10 @@ This project is directly inspired by and builds upon the excellent work of **Alb
 - Full dictionary-like interface
 - Overlapping range strategies
 - Open-ended ranges (infinite bounds)
-- Comprehensive test coverage (150+ tests, high coverage)
-- Modern tooling and CI/CD
+- O(log M + K) lookups via binary search on sorted range starts
+- Point ranges `(n, n)` for single-value keys
+- 200 tests with 98% code coverage
+- Modern tooling (ruff, mypy, ty) and CI/CD on Python 3.8–3.13
 
 ## ✨ Features
 
@@ -38,8 +40,17 @@ This project is directly inspired by and builds upon the excellent work of **Alb
   - `'last'`: Return last matching range (by insertion order)
   - `'shortest'`: Return shortest matching range
   - `'longest'`: Return longest matching range
-- **Flexible Types**: Works with integers, floats, and mixed types
+- **Point Ranges**: Use `(n, n)` when a key should match exactly one number (not a half-open interval)
+- **Flexible Types**: Works with integers, floats, and mixed types (bounds must be `int`, `float`, or `None`; `bool` is rejected)
+- **Input Validation**: Invalid `overlap_strategy`, non-numeric bounds, and non-finite floats raise clear errors at construction
+- **PEP 561**: Ships `py.typed` for type checker discovery
 - **Backwards Compatible**: 100% compatible with original `range-key-dict` v1 API
+
+### Range Semantics
+
+- **Half-open intervals** (default): `[start, end)` — includes `start`, excludes `end`. Adjacent ranges such as `(0, 10)` and `(10, 20)` meet at `10` without overlapping.
+- **Point ranges**: When `start == end`, only that exact value matches (e.g. `(42, 42)` matches `42` only).
+- **Open-ended**: `None` as a bound means negative or positive infinity.
 
 ## 📦 Installation
 
@@ -274,7 +285,7 @@ pytest --cov=range_key_dict --cov-report=html
 pytest tests/test_backwards_compatibility.py
 ```
 
-Run `pytest --cov=range_key_dict` for current test count and coverage (150+ tests).
+The suite currently has **200 tests** and **98%** coverage on `range_key_dict`. Test modules include backwards compatibility, dict interface, edge cases, open-ended ranges, overlapping strategies, point ranges, performance/bisect correctness, PEP 561, and robustness/regression tests.
 
 ## 🛠️ Development
 
@@ -282,7 +293,7 @@ Run `pytest --cov=range_key_dict` for current test count and coverage (150+ test
 
 ```bash
 # Clone the repository
-git clone https://github.com/odosmatthews/range-key-dict-2.git
+git clone https://github.com/eddiethedean/range-key-dict-2.git
 cd range-key-dict-2
 
 # Install in development mode with dev dependencies
@@ -295,29 +306,29 @@ pre-commit install
 ### Run Quality Checks
 
 ```bash
-# Lint and auto-fix with ruff (fast!)
-ruff check --fix .
-
-# Format check with ruff
-ruff format .
-
-# Alternative: Format with black
-black range_key_dict tests
-
-# Sort imports
-isort range_key_dict tests
+# Format and lint (recommended)
+ruff format range_key_dict tests
+ruff check range_key_dict tests
 
 # Type check
 mypy range_key_dict
+ty check
 
-# Run all checks (pre-commit)
+# Run tests with coverage
+pytest --cov=range_key_dict --cov-report=term-missing
+
+# Run all pre-commit hooks (black, isort, ruff, mypy)
 pre-commit run --all-files
 ```
 
 ## 📋 Requirements
 
-- Python 3.8+
+- Python 3.8 through 3.13 (see CI matrix)
 - No runtime dependencies!
+
+## 📜 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes. Current version: **2.1.0**.
 
 ## 🤝 Contributing
 
@@ -346,8 +357,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📮 Contact & Support
 
-- **Issues**: [GitHub Issues](https://github.com/odosmatthews/range-key-dict-2/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/odosmatthews/range-key-dict-2/discussions)
+- **Issues**: [GitHub Issues](https://github.com/eddiethedean/range-key-dict-2/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/eddiethedean/range-key-dict-2/discussions)
 
 ---
 

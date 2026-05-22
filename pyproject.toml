@@ -32,9 +32,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/odosmatthews/range-key-dict-2"
-"Bug Tracker" = "https://github.com/odosmatthews/range-key-dict-2/issues"
-"Source Code" = "https://github.com/odosmatthews/range-key-dict-2"
+Homepage = "https://github.com/eddiethedean/range-key-dict-2"
+"Bug Tracker" = "https://github.com/eddiethedean/range-key-dict-2/issues"
+"Source Code" = "https://github.com/eddiethedean/range-key-dict-2"
 "Original Project" = "https://github.com/albertmenglongli/range-key-dict"
 
 [project.optional-dependencies]

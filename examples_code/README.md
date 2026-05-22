@@ -1,6 +1,8 @@
 # Python Example Scripts
 
-This directory contains Python scripts demonstrating all features of `range-key-dict-2`.
+This directory contains Python scripts demonstrating all features of `range-key-dict-2` (version **2.1.0**).
+
+Ranges use half-open semantics `[start, end)` unless `start == end`, in which case only that exact value matches. Use `None` for unbounded ends. See [../README.md](../README.md) for overlap strategies and validation rules.
 
 ## 📄 Scripts
 
