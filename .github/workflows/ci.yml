@@ -76,9 +76,8 @@ jobs:
         print(f"Coverage badge: {pct}% ({color})")
         PY
 
-    # Optional: requires repo on codecov.io and CODECOV_TOKEN secret (see README).
+    # Optional: link repo on codecov.io; upload errors do not fail CI (see README).
     - name: Upload coverage to Codecov
-      if: secrets.CODECOV_TOKEN != ''
       continue-on-error: true
       uses: codecov/codecov-action@v4
       with:
