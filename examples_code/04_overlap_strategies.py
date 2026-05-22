@@ -5,7 +5,9 @@ This script demonstrates how to handle overlapping ranges with different strateg
 Run this file directly: python 04_overlap_strategies.py
 """
 
-from range_key_dict import RangeKeyDict
+from typing import Any, Dict, List
+
+from range_key_dict import OverlapStrategy, RangeKey, RangeKeyDict
 
 
 def example_1_error_strategy():
@@ -264,13 +266,13 @@ def example_10_comparing_strategies():
     print("Example 10: Comparing All Strategies")
     print("=" * 70)
 
-    ranges = {
+    ranges: Dict[RangeKey, Any] = {
         (0, 100): "Range A (0-100)",
         (50, 150): "Range B (50-150)",
         (80, 120): "Range C (80-120)",
     }
 
-    strategies = ["first", "last", "shortest", "longest"]
+    strategies: List[OverlapStrategy] = ["first", "last", "shortest", "longest"]
     test_point = 90  # This point is in all three ranges
 
     print(f"Looking up point {test_point} (in all 3 ranges):\n")

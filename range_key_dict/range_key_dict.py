@@ -8,11 +8,14 @@ Original concept by Albert Li (menglong.li): https://github.com/albertmenglongli
 Modernized and enhanced for Python 3.8+ with improved performance and additional features.
 """
 
-from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple
+from __future__ import annotations
 
-# Type aliases
-RangeKey = Tuple[Optional[float], Optional[float]]
+from dataclasses import dataclass
+from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, Union
+
+# Type aliases (int bounds are valid; floats and None for open-ended ranges)
+RangeBound = Union[int, float]
+RangeKey = Tuple[Optional[RangeBound], Optional[RangeBound]]
 OverlapStrategy = Literal["error", "first", "last", "shortest", "longest"]
 
 
@@ -20,19 +23,32 @@ OverlapStrategy = Literal["error", "first", "last", "shortest", "longest"]
 class RangeEntry:
     """Internal representation of a range-value pair."""
 
-    start: Optional[float]
-    end: Optional[float]
+    start: Optional[RangeBound]
+    end: Optional[RangeBound]
     value: Any
     insertion_order: int = 0  # Track insertion order for 'first'/'last' strategies
 
+    def is_point(self) -> bool:
+        """True when start and end are equal (a single precise value)."""
+        return self.start is not None and self.end is not None and self.start == self.end
+
     def contains(self, number: float) -> bool:
         """Check if this range contains the given number."""
+        if self.is_point():
+            return number == self.start
         start_ok = self.start is None or self.start <= number
         end_ok = self.end is None or number < self.end
         return start_ok and end_ok
 
     def overlaps(self, other: "RangeEntry") -> bool:
         """Check if this range overlaps with another range."""
+        if self.is_point():
+            assert self.start is not None
+            return other.contains(self.start)
+        if other.is_point():
+            assert other.start is not None
+            return self.contains(other.start)
+
         # Handle None bounds (infinity)
         self_start = float("-inf") if self.start is None else self.start
         self_end = float("inf") if self.end is None else self.end

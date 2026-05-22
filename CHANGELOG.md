@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-05-22
+
+### Fixed
+
+- **Point ranges**: Keys where `start == end` (e.g. `(1, 1)`) now match that single value on lookup ([#1](https://github.com/eddiethedean/range-key-dict-2/issues/1))
+
+### Changed
+
+- **Typing**: Annotations use Python 3.8–compatible `typing` forms (`Union`, `Optional`, `Dict`, `List`); exported `RangeBound` alias
+
 ## [2.0.0] - 2025-10-21
 
 ### 🎉 Initial Release
@@ -79,5 +89,6 @@ See [original repository](https://github.com/albertmenglongli/range-key-dict) fo
 
 ---
 
+[2.0.1]: https://github.com/odosmatthews/range-key-dict-2/releases/tag/v2.0.1
 [2.0.0]: https://github.com/odosmatthews/range-key-dict-2/releases/tag/v2.0.0
 
