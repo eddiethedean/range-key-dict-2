@@ -8,11 +8,14 @@ Original concept by Albert Li (menglong.li): https://github.com/albertmenglongli
 Modernized and enhanced for Python 3.8+ with improved performance and additional features.
 """
 
-from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple
+from __future__ import annotations
 
-# Type aliases
-RangeKey = Tuple[Optional[float], Optional[float]]
+from dataclasses import dataclass
+from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, Union
+
+# Type aliases (int bounds are valid; floats and None for open-ended ranges)
+RangeBound = Union[int, float]
+RangeKey = Tuple[Optional[RangeBound], Optional[RangeBound]]
 OverlapStrategy = Literal["error", "first", "last", "shortest", "longest"]
 
 
@@ -20,8 +23,8 @@ OverlapStrategy = Literal["error", "first", "last", "shortest", "longest"]
 class RangeEntry:
     """Internal representation of a range-value pair."""
 
-    start: Optional[float]
-    end: Optional[float]
+    start: Optional[RangeBound]
+    end: Optional[RangeBound]
     value: Any
     insertion_order: int = 0  # Track insertion order for 'first'/'last' strategies
 

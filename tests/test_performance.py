@@ -7,15 +7,17 @@ Future optimization should implement O(log M) binary search using:
 - Benchmark suite to measure improvements
 """
 
+from typing import Any, Dict
+
 import pytest
 
-from range_key_dict import RangeKeyDict
+from range_key_dict import RangeKey, RangeKeyDict
 
 
 def test_moderate_number_of_ranges():
     """Test that the dict can handle a moderate number of ranges."""
     # Create dict with 1,000 non-overlapping ranges
-    ranges = {(i * 100, (i + 1) * 100): f"range_{i}" for i in range(1000)}
+    ranges: Dict[RangeKey, Any] = {(i * 100, (i + 1) * 100): f"range_{i}" for i in range(1000)}
     rkd = RangeKeyDict(ranges)
 
     assert len(rkd) == 1000
@@ -29,7 +31,7 @@ def test_moderate_number_of_ranges():
 def test_many_overlapping_ranges():
     """Test with overlapping ranges."""
     # Create ranges that all overlap at point 500
-    ranges = {(i, 1000): f"range_{i}" for i in range(0, 100, 10)}
+    ranges: Dict[RangeKey, Any] = {(i, 1000): f"range_{i}" for i in range(0, 100, 10)}
     rkd = RangeKeyDict(ranges, overlap_strategy="first")
 
     assert len(rkd) == 10
@@ -49,7 +51,7 @@ def test_repeated_lookups():
 @pytest.mark.parametrize("size", [10, 100, 500])
 def test_scalability(size):
     """Test that the dict scales to different sizes."""
-    ranges = {(i * 10, (i + 1) * 10): f"range_{i}" for i in range(size)}
+    ranges: Dict[RangeKey, Any] = {(i * 10, (i + 1) * 10): f"range_{i}" for i in range(size)}
     rkd = RangeKeyDict(ranges)
 
     assert len(rkd) == size

@@ -1,8 +1,10 @@
 """Test edge cases and boundary conditions."""
 
+from typing import Any, Dict
+
 import pytest
 
-from range_key_dict import RangeKeyDict
+from range_key_dict import RangeKey, RangeKeyDict
 
 
 def test_empty_dict_operations():
@@ -92,7 +94,7 @@ def test_very_negative_numbers():
 
 def test_many_ranges():
     """Test with many ranges."""
-    ranges = {(i * 10, (i + 1) * 10): f"range_{i}" for i in range(100)}
+    ranges: Dict[RangeKey, Any] = {(i * 10, (i + 1) * 10): f"range_{i}" for i in range(100)}
     rkd = RangeKeyDict(ranges)
 
     assert len(rkd) == 100
